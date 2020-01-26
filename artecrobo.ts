@@ -58,7 +58,7 @@ namespace artecrobo {
 	let state = DCmotion.Brake;
 
 	// Move DC motor
-	//% blockId=artec_move_dc_motor
+	//% blockId=artec_move_dc_motor group="Motor"
 	//% block="DC motor %_connector| motion: %_motion"
 	export function moveDCMotor(_connector: connectorDCMotor, _motion: DCmotion): void {
 		switch(_motion) {
@@ -122,7 +122,7 @@ namespace artecrobo {
 		state = _motion;
 	}
 
-	//% blockId=artec_set_speed_dc_motor
+	//% blockId=artec_set_speed_dc_motor group="Motor"
 	//% block="DC motor %_connector| speed: %_speed"
 	//% _speed.min=0 _speed.max=1023
 	export function setSpeedDCMotor(_connector: connectorDCMotor, _speed: number): void {
@@ -144,7 +144,7 @@ namespace artecrobo {
 	pins.servoWritePin(AnalogPin.P14, angleP14);
 	pins.servoWritePin(AnalogPin.P15, angleP15);
 
-	//% blockId=artec_move_servo_motor_max
+	//% blockId=artec_move_servo_motor_max group="Motor"
 	//% block="move servo pin %_connector| to (degrees) %_angle"
 	//% _angle.min=0 _angle.max=180
 	export function moveServoMotorMax(_connector: connectorServoMotor, _angle: number): void {
@@ -168,7 +168,7 @@ namespace artecrobo {
 		}
 	}
 
-	//% blockId=artec_move_servo_motor
+	//% blockId=artec_move_servo_motor group="Motor"
 	//% block="move servo pin %_connector| to (degrees) %_angle| speed: %_speed"
 	//% _angle.min=0 _angle.max=180
 	//% _speed.min=0 _speed.max=20
@@ -218,7 +218,7 @@ namespace artecrobo {
 	 * @param angle14 ServoMotor Angle P14
 	 * @param angle15 ServoMotor Angle P15
 	 */
-	//% weight=84
+	//% weight=84 group="Motor"
 	//% blockId=artec_async_move_servo_motor
 	//% block="move servo synchronously | speed: %_speed| P13 (degrees): %_angle13| P14 (degrees): %_angle14 |P15 (degrees): %_angle15"
 	//% _speed.min=1 _speed.max=20
@@ -303,7 +303,7 @@ namespace artecrobo {
 	}
 
 	// Turn LED 
-	//% blockId=artec_turn_led
+	//% blockId=artec_turn_led group="Sensor"
 	//% block="turn LED %_connector|: %_motion"
 	export function turnLED(_connector: connectorLED, _motion: LEDmotion): void {
 		switch(_motion) {
@@ -332,7 +332,7 @@ namespace artecrobo {
      * Measure the sound level as a number between 0 and 100
      * @param pin The pin that the mic is attached to.
      */
-    //% block = "sound sensor value"
+    //% block = "sound sensor value" group="Sensor"
     export function soundLevel(pin: AnalogPin): number {
         let n = 1000
         let max = 0
@@ -347,12 +347,12 @@ namespace artecrobo {
         }
         return max;
     }
-
+/*
     /**
      * Measure the temperature in degrees C
      * @param pin The pin that the temerature sensor is attached to.
-     */
-    //% block
+     
+    //% block group="Sensor"
     export function tempC(pin: AnalogPin): number {
         let R2 = 100000.0;
         let R25 = 100000.0;
@@ -371,18 +371,19 @@ namespace artecrobo {
     /**
     * Measure the temperature in degrees F
     * @param pin The pin that the temerature sensor is attached to.
-    */
-    //% block
+    
+    //% block group="Sensor"
     export function tempF(pin: AnalogPin): number {
         let temp_c = tempC(pin);
         return (Math.round(temp_c * 9.0 / 5.0) + 32);
     }
+*/
 
     /**
      * Measure the light level as a number between 0 and 100
      * @param pin The pin that the light sensor is attached to.
      */
-    //% block
+    //% block group="Sensor"
     export function lightLevel(pin: AnalogPin): number {
         let max_reading = 28;
         let value = Math.sqrt(pins.analogReadPin(pin)); // to compensate for inverse square indoor lack of sensitivity
@@ -392,4 +393,53 @@ namespace artecrobo {
         }
         return light_level;
     }
+	
+	/**
+     * Measure the IR Photoreflector level as a number between 0 and 1 for Line Tracking
+     * @param pin The pin that the IR Photoreflector is attached to.
+     */
+    //% block group="Sensor"
+    export function InfraredPhotoreflector(pin: AnalogPin): number {
+        let max_reading = 28;
+        let value = Math.sqrt(pins.analogReadPin(pin)); // to compensate for inverse square indoor lack of sensitivity
+        let IR_level = Math.round(pins.map(value, 0, max_reading, 0, 100));
+        if (IR_level > 100) {
+            IR_level = 1;
+        }
+		else{
+			IR_level = 0;
+		}
+        return IR_level;
+    }
+	
+    export enum SonarVersion {
+        V1 = 0x1,
+        V2 = 0x2
+    }	
+	let distanceBuf = 0;
+	/**
+     * Measure the ultrasonic level as a number 
+     * @param pin The pin that the ultrasonic is attached to.
+     */
+	//% blockId=robotbit_ultrasonic block="Ultrasonic(CM)|pin %pin"
+    //% weight=10
+    export function Ultrasonic(pin: DigitalPin): number {
+        pins.setPull(pin, PinPullMode.PullNone);
+		pins.digitalWritePin(pin, 0);
+        control.waitMicros(2);
+        pins.digitalWritePin(pin, 1);
+        control.waitMicros(10);
+        pins.digitalWritePin(pin, 0);
+		// read pulse
+        let d = pins.pulseIn(pin, PulseValue.High, 25000);
+        let ret = d;
+        // filter timeout spikes
+        if (ret == 0 && distanceBuf != 0) {
+            ret = distanceBuf;
+        }
+        distanceBuf = d;
+		return Math.floor(ret * 9 / 6 / 58);
+        // Correction
+    }
+
 }
