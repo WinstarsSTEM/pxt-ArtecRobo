@@ -334,18 +334,13 @@ namespace artecrobo {
      */
     //% block = "sound sensor value" group="Sensor"
     export function soundLevel(pin: AnalogPin): number {
-        let n = 1000
-        let max = 0
-        for (let i = 0; i < n; i++) {
-            let value = Math.round((pins.analogReadPin(pin) - 511) / 5);
-            if (value > 100) {
-                value = 100;
-            }
-            if (value > max) {
-                max = value;
-            }
+        let max_reading = 28;
+        let value = Math.sqrt(pins.analogReadPin(pin)); // to compensate for inverse square indoor lack of sensitivity
+        let light_level = Math.round(pins.map(value, 0, max_reading, 0, 100));
+        if (light_level > 100) {
+            light_level = 100;
         }
-        return max;
+        return light_level;
     }
 /*
     /**
