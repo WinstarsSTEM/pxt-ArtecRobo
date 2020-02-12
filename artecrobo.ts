@@ -403,11 +403,11 @@ namespace artecrobo {
         let max_reading = 28;
         let value = Math.sqrt(pins.analogReadPin(pin)); // to compensate for inverse square indoor lack of sensitivity
         let IR_level = Math.round(pins.map(value, 0, max_reading, 0, 100));
-        if (IR_level > 100) {
-            IR_level = 1;
+        if (IR_level > 200) {
+            IR_level = 0;
         }
 		else{
-			IR_level = 0;
+			IR_level = 1;
 		}
         return IR_level;
     }
